@@ -1,4 +1,4 @@
-#!/bin/bash
+!/bin/bash
 #  AO PREENCHER(MOS) ESSE CABEÇALHO COM O(S) MEU(NOSSOS) NOME(S) E
 #  O(S) MEU(NOSSOS) NÚMERO(S) USP, DECLARO(AMOS) QUE SOU(MOS) O(S)
 #  ÚNICO(S) AUTOR(ES) E RESPONSÁVEL(IS) POR ESSE PROGRAMA. TODAS AS
@@ -14,9 +14,9 @@
 #  POR DESONESTIDADE ACADÊMICA.
 #
 #  Nome(s) : Débora D'Angelo Reina de Araujo
-#	     Eike
+#	     Eike Souza da Silva
 #  NUSP(s) : 11221668
-#	     XXXXXXXX
+#	     4618653
 #
 #  Referências: Com exceção das rotinas fornecidas no enunciado e em
 #  sala de aula, caso você(s) tenha(m) utilizado alguma referência,
@@ -32,6 +32,8 @@
 function cria_user {
 	POSSO='TRUE'
 
+	SENHA=$(echo "$2" | tr 'A-Za-z' 'N-ZA-Mn-za-m')
+
 	# verifica se o usuário já existe
 	for estado in .offline .online; do 
 		for user in $(ls /tmp/server/$estado); do
@@ -46,7 +48,7 @@ function cria_user {
 	done
 
 	if [ $POSSO = 'TRUE' ]; then
-		echo $2 > /tmp/server/.offline/$1
+		echo $SENHA > /tmp/server/.offline/$1
 	else
 		echo "ERRO"
 	fi
@@ -72,6 +74,10 @@ function muda_senha {
 		fi
 	done
 	
+	# encripta
+	ANTIGA=$(echo $2 | tr 'A-Za-z' 'N-ZA-Mn-za-m')
+	NOVA=$(echo $3 | tr 'A-Za-z' 'N-ZA-Mn-za-m')
+
 	# se o usuario existe, verifica se senha antiga está correta
 	if [ $EXISTE = 'TRUE' ]; then
 		i=0
@@ -81,8 +87,8 @@ function muda_senha {
 			dado[i]=$linha
 			let "i=i+1"
 		done < /tmp/server/$ESTADO/$1
-		if [ $2 = ${dado[0]} ]; then
-			echo $3 > /tmp/server/$ESTADO/$1
+		if [ $ANTIGA = ${dado[0]} ]; then
+			echo $NOVA > /tmp/server/$ESTADO/$1
 			echo ${dado[1]} >> /tmp/server/$ESTADO/$1
 		else
 			echo "ERRO"
@@ -102,12 +108,15 @@ function login {
 		fi
 	done
 	
+	SENHA=$(echo $2 | tr 'A-Za-z' 'N-ZA-Mn-za-m')
+
 	if [ $POSSO = 'TRUE' ]; then
 		read dado < /tmp/server/.offline/$1
-		if [ $2 = $dado ]; then
+		if [ $SENHA = $dado ]; then
 			mv /tmp/server/.offline/$1 /tmp/server/.online/$1
-			echo $dado > /tmp/server/.online/$1
-			tty >> /tmp/server/.online/$1
+			echo $SENHA > /tmp/server/.online/$1
+			ENDERECO=$(echo $(tty) | tr 'A-Za-z0-9' 'N-ZA-Mn-za-m3-90-2')
+			echo $ENDERECO >> /tmp/server/.online/$1
 			return 1
 		else
 			echo "ERRO"
@@ -200,20 +209,22 @@ while [ $1 = 'cliente' ]; do
 					while read linha; do
 						dado[i]=$linha;
 						let "i=i+1"
-					done < /tmp/server/.online/$user;
-					echo -n "[Mensagem de $USUARIO]: " > /tmp/server/.menssagem
+					done < /tmp/server/.online/$user
+					ENDERECO=$(echo -n ${dado[1]} | tr 'N-ZA-Mn-za-m3-90-2' 'A-Za-z0-9') # decripta tty
+					echo -n "[Mensagem de $USUARIO]: " | tr 'A-Za-z' 'N-ZA-Mn-za-m' > /tmp/server/.menssagem # encripta msg
 					i=0
 					for info in ${comando[@]};  do
 						if [ $i -gt 1 ]; then
-							echo -n $info >> /tmp/server/.menssagem
+							echo -n $info | tr 'A-Za-z' 'N-ZA-Mn-za-m' >> /tmp/server/.menssagem # encripta msg
 							echo -n " " >> /tmp/server/.menssagem
 						fi
 						let "i=i+1"
 					done
 					echo ""  >> /tmp/server/.menssagem
-					cat /tmp/server/.menssagem > ${dado[1]}
+					#ROT13
+					cat /tmp/server/.menssagem | tr 'A-Za-z' 'N-ZA-Mn-za-m' >  $ENDERECO #envia a msg decriptada
 					rm /tmp/server/.menssagem
-					echo -n "cliente> " > ${dado[1]}
+					echo -n "cliente> " > $ENDERECO
 					break
 				fi
 			done
